@@ -3,6 +3,7 @@ from tkinter import messagebox
 import random,ast
 from PIL import ImageTk, Image
 import collections
+import os
 
 root=Tk()
 w_width = 1100
@@ -14,7 +15,7 @@ root.title("Classic Hangman!")
 root.config(bg="white")
 root.minsize(1000,480)
 
-levels_list=["Fruits","Vegetables"]
+levels_list=[os.path.splitext(x)[0] for x in [f for f in os.listdir("categories") if os.path.isfile(os.path.join("categories", f))]]
 
 hidden_words=dict()
 words_list=[]
