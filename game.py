@@ -1,9 +1,12 @@
-from tkinter import *
+from tkinter import Canvas, Frame, Label, Tk
 from tkinter import messagebox
-import random, ast
+import random
+import ast
+from tkinter.constants import BOTH, BOTTOM, DISABLED, NW, TOP, X, Y, LEFT
 from PIL import ImageTk, Image
 import collections
-import os, sys
+import os
+import sys
 
 root = Tk()
 w_width = 1100
@@ -15,24 +18,30 @@ root.title("Classic Hangman!")
 root.config(bg="white")
 root.minsize(1000, 480)
 
-levels_list = [
-    os.path.splitext(x)[0]
-    for x in [
-        f
-        for f in os.listdir("categories")
-        if os.path.isfile(os.path.join("categories", f))
-    ]
-]
 
-hidden_words = {}
-words_list = []
-word_labels_list = []
-alphabets_btn_list = []
-level_btn_list = []
-wrong_count = 0
-full_word = None
-word = None
-hint = None
+class Global:
+    def __init__(self):
+        # Add more levels as JSON file in categories dir
+        self.levels_list = [
+            os.path.splitext(x)[0]
+            for x in [
+                f
+                for f in os.listdir("categories")
+                if os.path.isfile(os.path.join("categories", f))
+            ]
+        ]
+        self.hidden_words = {}
+        self.words_list = []
+        self.word_labels_list = []
+        self.alphabets_btn_list = []
+        self.level_btn_list = []
+        self.wrong_count = 0
+        self.full_word = None
+        self.word = None
+        self.hint = None
+
+
+Global = Global()
 
 
 def forget_base_frames():
@@ -43,29 +52,29 @@ def forget_base_frames():
 
 
 def reset():
-    global word_labels_list, alphabets_btn_list, wrong_count, level_btn_list
+    # global word_labels_list, alphabets_btn_list, wrong_count, level_btn_list
     hangman_body_image.delete("all")
 
-    for label in word_labels_list:
+    for label in Global.word_labels_list:
         label.pack_forget()
     hint_label.pack_forget()
-    for btn in alphabets_btn_list:
+    for btn in Global.alphabets_btn_list:
         btn.pack_forget()
-    word_labels_list.clear()
-    hidden_words.clear()
-    wrong_count = 0
-    for btns in level_btn_list:
+    Global.word_labels_list.clear()
+    Global.hidden_words.clear()
+    Global.wrong_count = 0
+    for btns in Global.level_btn_list:
         btns.pack_forget()
     game_title.pack_forget()
     category_label.pack_forget()
 
 
 def select_level_btn(event):
-    global words_list
+    # global words_list
     event.widget.cget("text")
     with open(f"categories\{event.widget.cget('text')}.json", "r") as a_file:
-        words_list = ast.literal_eval(a_file.read())
-        print(words_list)
+        Global.words_list = ast.literal_eval(a_file.read())
+
     level_select_bg.pack_forget()
     hangman_body.pack(side=LEFT, fill=Y)
     hangman_body_image.pack(expand=True)
@@ -76,13 +85,13 @@ def select_level_btn(event):
 
 
 def choose_level():
-    global levels_list, level_btn_list
+    # global levels_list, level_btn_list
     reset()
     forget_base_frames()
     level_select_bg.pack(expand=True, fill=BOTH)
     game_title.pack(pady=20)
     category_label.pack(pady=(0, 20))
-    for level in levels_list:
+    for level in Global.levels_list:
         btn = Label(
             level_select_bg,
             text=level,
@@ -93,48 +102,49 @@ def choose_level():
         )
         btn.pack(ipadx=5, ipady=5, pady=5)
         btn.bind("<Button>", select_level_btn)
-        level_btn_list.append(btn)
+        Global.level_btn_list.append(btn)
 
 
 def get_initial_blocked_letters():
-    global word, full_word
-    temp = [item for item, count in collections.Counter(word).items() if count > 1]
-    result = [e for e in full_word]
+    temp = [
+        item for item, count in collections.Counter(Global.word).items() if count > 1
+    ]
+    result = [e for e in Global.full_word]
     for a in temp:
-        if a in full_word:
+        if a in Global.full_word:
             result.remove(a)
     return result
 
 
 def create_word():
-    global words_list, hidden_words, word_labels_list, full_word, word, hint
-    if not words_list:
+    # global words_list, hidden_words, word_labels_list, full_word, word, hint
+    if not Global.words_list:
         forget_base_frames()
         messagebox.showinfo(message="all levels passed")
         sys.exit()
-    word = random.choice(list(words_list.keys()))
-    hint = words_list[word]
-    print(word)
-    print(hint)
-    vanish_no_list = random.sample(range(len(word)), len(word) - 2)
-    print(vanish_no_list)
+    Global.word = random.choice(list(Global.words_list.keys()))
+    Global.hint = Global.words_list[Global.word]
+    # print(word)
+    # print(hint)
+    vanish_no_list = random.sample(range(len(Global.word)), len(Global.word) - 2)
+    # print(vanish_no_list)
 
     for n in vanish_no_list:
-        if word[n] in hidden_words:
-            hidden_words[word[n]].append(n)
+        if Global.word[n] in Global.hidden_words:
+            Global.hidden_words[Global.word[n]].append(n)
         else:
-            hidden_words[word[n]] = [n]
-    full_word = list(word)
-    print(hidden_words)
-    for x in word:
-        if x in hidden_words.keys():
-            for y in hidden_words[x]:
-                full_word[y] = " "
+            Global.hidden_words[Global.word[n]] = [n]
+    Global.full_word = list(Global.word)
+    # print(hidden_words)
+    for x in Global.word:
+        if x in Global.hidden_words.keys():
+            for y in Global.hidden_words[x]:
+                Global.full_word[y] = " "
 
-    print(full_word)
+    # print(full_word)
 
     words_holder.pack(side=TOP, fill=Y, pady=10)
-    for letter in full_word:
+    for letter in Global.full_word:
         l = Label(
             words_holder,
             text=letter,
@@ -145,14 +155,14 @@ def create_word():
             bg="white",
         )
         l.pack(side=LEFT, padx=2)
-        word_labels_list.append(l)
+        Global.word_labels_list.append(l)
 
-    hint_label.config(text=f"Hint: {hint}", font=("Corbel", 15))
+    hint_label.config(text=f"Hint: {Global.hint}", font=("Corbel", 15))
     hint_label.pack(side=TOP, fill=Y, pady=10)
 
 
 def create_hangman_img(wrong_count):
-    image = Image.open(f"images/{wrong_count}.png")
+    image = Image.open(f"images/{wrong_count}.png").convert("RGBA")
     image = image.resize((340, 420), Image.BICUBIC)
     img = ImageTk.PhotoImage(image)
     hangman_body_image.create_image(20, 20, image=img, anchor=NW)
@@ -160,41 +170,43 @@ def create_hangman_img(wrong_count):
 
 
 def check_letter(event):
-    global hidden_words, wrong_count, full_word, word, words_list
-    print(event.widget.cget("state"))
-    if event.widget.cget("state") != "disabled":
-        clicked_letter = event.widget.cget("text")
-        print(clicked_letter)
-        if clicked_letter in hidden_words.keys():
-            for index in hidden_words[clicked_letter]:
-                word_labels_list[index].config(text=clicked_letter)
-                full_word[index] = clicked_letter
-                print(full_word)
-                if full_word == list(word):
-                    game_win()
-        else:
-            print("absent")
-            wrong_count += 1
-            create_hangman_img(wrong_count)
+    # global hidden_words, wrong_count, full_word, word, words_list
+    # print(event.widget.cget("state"))
+    if event.widget.cget("state") == "disabled":
+        return
 
-            if wrong_count >= 5:
-                messagebox.showinfo(message=f"noob\nthe answer was {word}")
-                print(f"new {words_list}")
-                choose_level()
-        event.widget.config(bg="SystemButtonFace", state=DISABLED)
+    clicked_letter = event.widget.cget("text")
+    # print(clicked_letter)
+    if clicked_letter in Global.hidden_words.keys():
+        for index in Global.hidden_words[clicked_letter]:
+            Global.word_labels_list[index].config(text=clicked_letter)
+            Global.full_word[index] = clicked_letter
+            # print(full_word)
+            if Global.full_word == list(Global.word):
+                game_win()
+    else:
+        # print("absent")
+        Global.wrong_count += 1
+        create_hangman_img(Global.wrong_count)
+
+        if Global.wrong_count >= 5:
+            messagebox.showinfo(message=f"noob\nthe answer was {Global.word}")
+            # print(f"new {words_list}")
+            choose_level()
+    event.widget.config(bg="SystemButtonFace", state=DISABLED)
 
 
 def game_win():
     messagebox.showinfo(message="Win\nYAY")
-    del words_list[word]
-    print(f"new {words_list}")
+    del Global.words_list[Global.word]
+    # print(f"new {words_list}")
     reset()
     create_word()
     create_alphabet_btns()
 
 
 def create_alphabet_btns():
-    global alphabets_btn_list, full_word
+    # global alphabets_btn_list, full_word
     alphabet = "a"
 
     letter_strip1.pack(side=TOP, fill=Y, pady=10)
@@ -222,7 +234,7 @@ def create_alphabet_btns():
         b.bind("<Button>", check_letter)
         if b.cget("text") in get_initial_blocked_letters():
             b.config(bg="SystemButtonFace", state=DISABLED)
-        alphabets_btn_list.append(b)
+        Global.alphabets_btn_list.append(b)
         alphabet = chr(ord(alphabet) + 1)
 
 
